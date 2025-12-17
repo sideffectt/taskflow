@@ -1,0 +1,12 @@
+.env
+.env.local
+.env.production
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.vscode/
+.idea/
+.pytest_cache/
+.DS_Store
