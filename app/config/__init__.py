@@ -5,3 +5,4 @@ from app.config.exceptions import (
     InvalidTaskIdException,
     DatabaseConnectionException
 )
+from app.config.logging import logger
