@@ -1,20 +1,17 @@
 from fastapi.testclient import TestClient
 
 from main import app
-from app.core import db
-
+from app.config import db
 
 db.connect()
 
 client = TestClient(app)
-
 
 def test_root():
     response = client.get("/")
     
     assert response.status_code == 200
     assert response.json() == {"message": "TaskFlow API is running"}
-
 
 def test_create_task():
     task_data = {
@@ -56,9 +53,8 @@ def test_get_task_by_id():
 
 def test_get_task_not_found():
     response = client.get("/tasks/000000000000000000000000")
-    
     assert response.status_code == 404
-    assert response.json()["detail"] == "Task not found"
+    assert "not found" in response.json()["detail"]
 
 
 def test_update_task():

@@ -2,7 +2,7 @@ from bson import ObjectId
 from datetime import datetime, timezone
 from typing import Optional
 
-from app.core.database import db
+from app.config.database import db
 
 def get_collection():
     return db.get_collection('tasks')

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+from app.config import TaskNotFoundException
 from typing import List
 
 from app.models.models import TaskCreate, TaskUpdate, TaskResponse
-from app.crud.crud import create_task, get_all_tasks, get_task_by_id, update_task, delete_task
+from app.services.crud import create_task, get_all_tasks, get_task_by_id, update_task, delete_task
 
 router = APIRouter(prefix='/tasks', tags=['tasks']) #Create router 
 
@@ -24,20 +25,20 @@ def list_tasks():
 def get_task(task_id: str):
     task = get_task_by_id(task_id)
     if not task:
-        raise HTTPException(status_code=404, detail='Task not found')
+        raise TaskNotFoundException(task_id)
     return task
 
 @router.put('/{task_id}', response_model=TaskResponse)
 def update_existing_task(task_id: str, task: TaskUpdate):
     result = update_task(task_id, task.model_dump())
     if not result:
-        raise HTTPException(status_code=404, detail='Task not found')
+        raise TaskNotFoundException(task_id)
     return result
 
 @router.delete('/{task_id}', status_code=204)
 def delete_existing_task(task_id: str):
     success = delete_task(task_id)
     if not success:
-        raise HTTPException(status_code=404, detail='Task not Found')
+        raise TaskNotFoundException(task_id)
     return None
 
