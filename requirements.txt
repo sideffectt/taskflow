@@ -6,3 +6,5 @@ pydantic
 pydantic-settings
 pytest
 httpx
+python-jose
+email-validator

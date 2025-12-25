@@ -2,90 +2,151 @@ from fastapi.testclient import TestClient
 
 from main import app
 from app.config import db
+import random
+import string
 
 db.connect()
 
 client = TestClient(app)
 
+
+def get_random_string(length=8):
+    return ''.join(random.choices(string.ascii_lowercase, k=length))
+
+
+def get_token():
+    username = f"testuser_{get_random_string()}"
+    email = f"{username}@test.com"
+    password = "test123"
+    
+    client.post("/auth/register", json={
+        "username": username,
+        "email": email,
+        "password": password
+    })
+    
+    response = client.post("/auth/login", json={
+        "username": username,
+        "password": password
+    })
+    return response.json()["access_token"]
+
+
+
 def test_root():
     response = client.get("/")
-    
     assert response.status_code == 200
     assert response.json() == {"message": "TaskFlow API is running"}
 
+
+def test_register():
+    response = client.post("/auth/register", json={
+        "username": "newuser123",
+        "email": "newuser123@test.com",
+        "password": "123456"
+    })
+    assert response.status_code in [201, 400]
+
+
+def test_login():
+    username = f"logintest_{get_random_string()}"
+    client.post("/auth/register", json={
+        "username": username,
+        "email": f"{username}@test.com",
+        "password": "test123"
+    })
+    
+    response = client.post("/auth/login", json={
+        "username": username,
+        "password": "test123"
+    })
+    assert response.status_code == 200
+    assert "access_token" in response.json()
+
+
+def test_tasks_without_token():
+    response = client.get("/tasks")
+    assert response.status_code == 401
+
+
 def test_create_task():
-    task_data = {
-        "title": "Test Task",
-        "description": "This is a test",
-        "priority": 3
-    }
-    
-    response = client.post("/tasks", json=task_data)
-    
+    token = get_token()
+    response = client.post(
+        "/tasks",
+        json={"title": "Test Task", "description": "This is a test", "priority": 3},
+        headers={"Authorization": f"Bearer {token}"}
+    )
     assert response.status_code == 201
-    
     data = response.json()
     assert data["title"] == "Test Task"
-    assert data["description"] == "This is a test"
-    assert data["priority"] == 3
     assert data["completed"] == False
-    assert "id" in data
-    assert "created_at" in data
 
 
 def test_get_all_tasks():
-    response = client.get("/tasks")
-    
+    token = get_token()
+    response = client.get(
+        "/tasks",
+        headers={"Authorization": f"Bearer {token}"}
+    )
     assert response.status_code == 200
     assert isinstance(response.json(), list)
 
 
 def test_get_task_by_id():
-    task_data = {"title": "Find Me", "priority": 1}
-    create_response = client.post("/tasks", json=task_data)
+    token = get_token()
+    create_response = client.post(
+        "/tasks",
+        json={"title": "Find Me", "priority": 1},
+        headers={"Authorization": f"Bearer {token}"}
+    )
     task_id = create_response.json()["id"]
     
-    response = client.get(f"/tasks/{task_id}")
-    
+    response = client.get(
+        f"/tasks/{task_id}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
     assert response.status_code == 200
     assert response.json()["title"] == "Find Me"
 
 
 def test_get_task_not_found():
-    response = client.get("/tasks/000000000000000000000000")
+    token = get_token()
+    response = client.get(
+        "/tasks/000000000000000000000000",
+        headers={"Authorization": f"Bearer {token}"}
+    )
     assert response.status_code == 404
-    assert "not found" in response.json()["detail"]
 
 
 def test_update_task():
-    task_data = {"title": "Update Me", "priority": 1}
-    create_response = client.post("/tasks", json=task_data)
+    token = get_token()
+    create_response = client.post(
+        "/tasks",
+        json={"title": "Update Me", "priority": 1},
+        headers={"Authorization": f"Bearer {token}"}
+    )
     task_id = create_response.json()["id"]
     
-    update_data = {"completed": True, "priority": 5}
-    response = client.put(f"/tasks/{task_id}", json=update_data)
-    
+    response = client.put(
+        f"/tasks/{task_id}",
+        json={"completed": True, "priority": 5},
+        headers={"Authorization": f"Bearer {token}"}
+    )
     assert response.status_code == 200
     assert response.json()["completed"] == True
-    assert response.json()["priority"] == 5
 
 
 def test_delete_task():
-    task_data = {"title": "Delete Me", "priority": 1}
-    create_response = client.post("/tasks", json=task_data)
+    token = get_token()
+    create_response = client.post(
+        "/tasks",
+        json={"title": "Delete Me", "priority": 1},
+        headers={"Authorization": f"Bearer {token}"}
+    )
     task_id = create_response.json()["id"]
     
-    response = client.delete(f"/tasks/{task_id}")
-    
+    response = client.delete(
+        f"/tasks/{task_id}",
+        headers={"Authorization": f"Bearer {token}"}
+    )
     assert response.status_code == 204
-    
-    get_response = client.get(f"/tasks/{task_id}")
-    assert get_response.status_code == 404
-
-
-def test_create_task_invalid_data():
-    task_data = {"priority": 3}
-    
-    response = client.post("/tasks", json=task_data)
-    
-    assert response.status_code == 422

@@ -1,0 +1,1 @@
+from app.routes.endpoints.task_routes import router as task_router
