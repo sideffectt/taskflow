@@ -150,3 +150,30 @@ def test_delete_task():
         headers={"Authorization": f"Bearer {token}"}
     )
     assert response.status_code == 204
+    
+def test_get_profile():
+    token = get_token()
+    response = client.get(
+        "/auth/profile",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    assert "username" in response.json()
+    assert "email" in response.json()
+
+
+def test_get_profile_without_token():
+    response = client.get("/auth/profile")
+    assert response.status_code == 401
+
+
+def test_update_profile():
+    token = get_token()
+    new_email = f"updated_{get_random_string()}@test.com"
+    response = client.put(
+        "/auth/profile",
+        json={"email": new_email},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    assert response.json()["email"] == new_email

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional
+from pymongo import ReturnDocument
 
 from bson import ObjectId
 
@@ -61,10 +62,10 @@ def update_user(username: str, update_data: dict) -> Optional[dict]:
         update_data["password"] = get_password_hash(update_data["password"])
     
     result = get_collection().find_one_and_update(
-        {"username": username},
-        {"$set": update_data},
-        return_document=True
-    )
+    {"username": username},
+    {"$set": update_data},
+    return_document=ReturnDocument.AFTER
+)
     
     if result:
         result["id"] = str(result.pop("_id"))
