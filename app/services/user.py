@@ -51,3 +51,24 @@ def authenticate_user(username: str, password: str) -> Optional[dict]:
     user["id"] = str(user.pop("_id"))
     logger.info(f"User authenticated: username={username}")
     return user
+def update_user(username: str, update_data: dict) -> Optional[dict]:
+    update_data = {k: v for k, v in update_data.items() if v is not None}
+    
+    if not update_data:
+        return get_user_by_username(username)
+    
+    if "password" in update_data:
+        update_data["password"] = get_password_hash(update_data["password"])
+    
+    result = get_collection().find_one_and_update(
+        {"username": username},
+        {"$set": update_data},
+        return_document=True
+    )
+    
+    if result:
+        result["id"] = str(result.pop("_id"))
+        result.pop("password", None)
+        logger.info(f"User updated: username={username}")
+    
+    return result

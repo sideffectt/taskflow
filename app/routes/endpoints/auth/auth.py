@@ -1,9 +1,9 @@
 from datetime import timedelta
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 
-from app.models import UserCreate, UserLogin, UserResponse, Token
-from app.services import get_user_by_username, get_user_by_email, create_user, authenticate_user
-from app.config.security import create_access_token
+from app.models import UserCreate, UserLogin, UserUpdate, UserResponse, Token
+from app.services import get_user_by_username, get_user_by_email, create_user, authenticate_user, update_user
+from app.config.security import create_access_token, get_current_user
 from app.config.config import settings
 
 router = APIRouter()
@@ -43,3 +43,25 @@ async def login(user: UserLogin):
         expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.get("/profile", response_model=UserResponse)
+async def get_profile(current_user: str = Depends(get_current_user)):
+    user = get_user_by_username(current_user)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return user
+
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(user_data: UserUpdate, current_user: str = Depends(get_current_user)):
+    updated_user = update_user(current_user, user_data.model_dump())
+    if not updated_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return updated_user
