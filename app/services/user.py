@@ -26,18 +26,19 @@ def get_user_by_email(email: str) -> Optional[dict]:
     return user
 
 
-def create_user(username: str, email: str, password: str) -> dict:
+def create_user(username: str, email: str, password: str, role: str = "user") -> dict:
     hashed_password = get_password_hash(password)
     user = {
         "username": username,
         "email": email,
         "password": hashed_password,
+        "role": role,
         "created_at": datetime.now(timezone.utc)
     }
     result = get_collection().insert_one(user)
     user["id"] = str(result.inserted_id)
     user.pop("password")
-    logger.info(f"User created: username={username}")
+    logger.info(f"User created: username={username}, role={role}")
     return user
 
 
@@ -71,5 +72,28 @@ def update_user(username: str, update_data: dict) -> Optional[dict]:
         result["id"] = str(result.pop("_id"))
         result.pop("password", None)
         logger.info(f"User updated: username={username}")
+    
+    return result
+
+def get_all_users() -> list:
+    users = []
+    for user in get_collection().find():
+        user["id"] = str(user.pop("_id"))
+        user.pop("password", None)
+        users.append(user)
+    return users
+
+
+def update_user_role(username: str, role: str) -> Optional[dict]:
+    result = get_collection().find_one_and_update(
+        {"username": username},
+        {"$set": {"role": role}},
+        return_document=ReturnDocument.AFTER
+    )
+    
+    if result:
+        result["id"] = str(result.pop("_id"))
+        result.pop("password", None)
+        logger.info(f"User role updated: username={username}, role={role}")
     
     return result

@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 
 from app.models import UserCreate, UserLogin, UserUpdate, UserResponse, Token
 from app.services import get_user_by_username, get_user_by_email, create_user, authenticate_user, update_user
-from app.config.security import create_access_token, get_current_user
+from app.config.security import create_access_token, get_current_user, get_current_user_with_role
 from app.config.config import settings
 
 router = APIRouter()
@@ -24,7 +24,8 @@ async def register(user: UserCreate):
     new_user = create_user(
         username=user.username,
         email=user.email,
-        password=user.password
+        password=user.password,
+        role=user.role.value
     )
     return new_user
 
@@ -46,19 +47,13 @@ async def login(user: UserLogin):
 
 
 @router.get("/profile", response_model=UserResponse)
-async def get_profile(current_user: str = Depends(get_current_user)):
-    user = get_user_by_username(current_user)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return user
+async def get_profile(current_user: dict = Depends(get_current_user_with_role)):
+    return current_user
 
 
 @router.put("/profile", response_model=UserResponse)
-async def update_profile(user_data: UserUpdate, current_user: str = Depends(get_current_user)):
-    updated_user = update_user(current_user, user_data.model_dump())
+async def update_profile(user_data: UserUpdate, current_user: dict = Depends(get_current_user_with_role)):
+    updated_user = update_user(current_user["username"], user_data.model_dump())
     if not updated_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

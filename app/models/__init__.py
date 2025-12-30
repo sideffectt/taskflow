@@ -1,2 +1,2 @@
 from app.models.models import TaskCreate, TaskUpdate, TaskResponse
-from app.models.user import UserCreate, UserLogin, UserUpdate, UserResponse, Token
+from app.models.user import UserRole, UserCreate, UserLogin, UserUpdate, UserRoleUpdate, UserResponse, Token

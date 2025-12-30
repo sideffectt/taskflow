@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from typing import List
 
 from app.models import TaskCreate, TaskUpdate, TaskResponse
-from app.services import create_task, get_all_tasks, get_task_by_id, update_task, delete_task
+from app.services import create_task, get_all_tasks, get_task_by_id, update_task, delete_task, generate_tasks_pdf
 from app.config import TaskNotFoundException
-from app.config.security import get_current_user
+from app.config.security import get_current_user, get_current_user_with_role
 
 router = APIRouter()
 
@@ -22,6 +23,18 @@ async def create_new_task(task: TaskCreate, current_user: str = Depends(get_curr
 @router.get("", response_model=List[TaskResponse])
 async def list_tasks(current_user: str = Depends(get_current_user)):
     return get_all_tasks()
+
+
+@router.get("/export/pdf")
+async def export_tasks_pdf(current_user: dict = Depends(get_current_user_with_role)):
+    tasks = get_all_tasks()
+    pdf_buffer = generate_tasks_pdf(tasks, current_user["username"])
+    
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=tasks_{current_user['username']}.pdf"}
+    )
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
