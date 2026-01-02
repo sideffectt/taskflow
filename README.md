@@ -1,45 +1,65 @@
 # TaskFlow API
 
-simple task management api with jwt authentication. built with fastapi and mongodb.
+Task management REST API with JWT authentication and role-based access control.
 
-## how to run
+Built with FastAPI and MongoDB.
+
+## Features
+
+- User registration and login (JWT)
+- Role-based access control (admin/user)
+- Task CRUD operations
+- Profile management
+- PDF export
+
+## Quick Start
 ```bash
+# install dependencies
 pip install -r requirements.txt
+
+# run server
 uvicorn main:app --reload
 ```
 
-make sure mongodb is running first.
+Make sure MongoDB is running first.
 
-## auth endpoints
+## Endpoints
 
+### Auth
 - `POST /auth/register` - create account
 - `POST /auth/login` - get token
+- `GET /auth/profile` - view profile (token required)
+- `PUT /auth/profile` - update profile (token required)
 
-## task endpoints (token required)
-
+### Tasks (token required)
 - `POST /tasks` - create task
-- `GET /tasks` - get all tasks
-- `GET /tasks/{id}` - get one task
+- `GET /tasks` - list all tasks
+- `GET /tasks/export/pdf` - download as PDF
+- `GET /tasks/{id}` - get single task
 - `PUT /tasks/{id}` - update task
 - `DELETE /tasks/{id}` - delete task
 
-## example
+### Admin (admin only)
+- `GET /admin/users` - list all users
+- `PUT /admin/users/{username}/role` - change user role
 
-register:
+## Example
+
+Register:
 ```bash
 curl -X POST http://127.0.0.1:8000/auth/register \
   -H "Content-Type: application/json" \
   -d '{"username": "ali", "email": "ali@test.com", "password": "123456"}'
 ```
 
-login:
+Login:
 ```bash
 curl -X POST http://127.0.0.1:8000/auth/login \
   -H "Content-Type: application/json" \
   -d '{"username": "ali", "password": "123456"}'
 ```
 
-create task (with token):
+Create task (with token):
 ```bash
 curl -X POST http://127.0.0.1:8000/tasks \
   -H "Content-Type: application/json" \
@@ -47,12 +67,43 @@ curl -X POST http://127.0.0.1:8000/tasks \
   -d '{"title": "my task", "priority": 2}'
 ```
 
-## tests
+Export PDF:
+```bash
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://127.0.0.1:8000/tasks/export/pdf \
+  -o tasks.pdf
+```
+
+## Tests
 ```bash
 pytest tests/ -v
 ```
 
-## todo
+## Tech Stack
 
-- [ ] docker support
-- [ ] refresh token
+- FastAPI
+- MongoDB
+- PyMongo
+- Pydantic
+- python-jose (JWT)
+- reportlab (PDF)
+- pytest
+
+## Project Structure
+```
+taskflow/
+├── main.py
+├── app/
+│   ├── config/      # settings, database, security, logging
+│   ├── models/      # pydantic schemas
+│   ├── services/    # business logic (CRUD, PDF)
+│   └── routes/      # API endpoints
+└── tests/
+```
+
+## TODO
+
+- [ ] Docker support
+- [ ] User-task relationship
+- [ ] Pagination
+- [ ] Refresh token

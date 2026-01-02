@@ -12,11 +12,11 @@ def generate_tasks_pdf(tasks: list, username: str) -> BytesIO:
     elements = []
     styles = getSampleStyleSheet()
     
-    # Title
+    
     title = Paragraph(f"Tasks Report - {username}", styles["Heading1"])
     elements.append(title)
     
-    # Date
+    
     date_text = Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles["Normal"])
     elements.append(date_text)
     elements.append(Spacer(1, 20))
@@ -24,10 +24,8 @@ def generate_tasks_pdf(tasks: list, username: str) -> BytesIO:
     if not tasks:
         elements.append(Paragraph("No tasks found.", styles["Normal"]))
     else:
-        # Table header
         data = [["Title", "Priority", "Completed", "Created"]]
-        
-        # Table rows
+    
         for task in tasks:
             created_at = task.get("created_at", "")
             if hasattr(created_at, "strftime"):
@@ -42,7 +40,6 @@ def generate_tasks_pdf(tasks: list, username: str) -> BytesIO:
                 created_at
             ])
         
-        # Create table
         table = Table(data, colWidths=[200, 60, 70, 80])
         table.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
