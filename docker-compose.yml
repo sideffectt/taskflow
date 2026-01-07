@@ -1,0 +1,42 @@
+# TaskFlow Docker Compose
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: taskflow-db
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=taskflow
+    networks:
+      - taskflow-network
+
+  # TaskFlow API Service
+  api:
+    build: .
+    container_name: taskflow-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - DATABASE_NAME=taskflow
+      - SECRET_KEY=your-secret-key-here
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+    depends_on:
+      - mongodb
+    networks:
+      - taskflow-network
+
+volumes:
+  mongodb_data:
+
+
+networks:
+  taskflow-network:
+    driver: bridge
