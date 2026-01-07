@@ -103,7 +103,6 @@ taskflow/
 
 ## TODO
 
-- [ ] Docker support
 - [ ] User-task relationship
 - [ ] Pagination
 - [ ] Refresh token
