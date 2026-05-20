@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 
 from main import app
 from app.config import db
+from app.services import create_user as _create_user
 import random
 import string
 
@@ -162,7 +163,7 @@ def test_get_profile():
     assert "email" in response.json()
 
 
-def test_get_profile_without_token():
+def test_getprofile_without_token():
     response = client.get("/auth/profile")
     assert response.status_code == 401
 
@@ -177,3 +178,66 @@ def test_update_profile():
     )
     assert response.status_code == 200
     assert response.json()["email"] == new_email
+    
+
+def get_admin_token():
+    username = f"admin_{get_random_string()}"
+    email = f"{username}@test.com"
+    password = "test123"
+    _create_user(username=username, email=email, password=password, role="admin")
+    response = client.post("/auth/login", json={"username": username, "password": password})
+    return response.json()["access_token"]
+
+
+def test_admin_listusers():
+    admin_token = get_admin_token()
+    response = client.get(
+        "/admin/users",
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    assert isinstance(response.json(), list)
+
+
+def test_list_usersfor_regular_user():
+    token = get_token()
+    response = client.get(
+        "/admin/users",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 403
+
+
+def test_admin_changeuser_role():
+    admin_token = get_admin_token()
+
+    regular_username = f"user_{get_random_string()}"
+    client.post("/auth/register", json={
+        "username": regular_username,
+        "email": f"{regular_username}@test.com",
+        "password": "test123"
+    })
+
+    response = client.put(
+        f"/admin/users/{regular_username}/role",
+        json={"role": "admin"},
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert response.status_code == 200
+    assert response.json()["role"] == "admin"
+
+
+
+def test_export_pdf():
+    token = get_token()
+    response = client.get(
+        "/tasks/export/pdf",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+
+
+def test_export_pdf_withouttoken():
+    response = client.get("/tasks/export/pdf")
+    assert response.status_code == 401

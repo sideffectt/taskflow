@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-import hashlib
-import secrets
 
+import bcrypt
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -13,18 +12,11 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def get_password_hash(password: str) -> str:
-    salt = secrets.token_hex(16)
-    hashed = hashlib.sha256((password + salt).encode()).hexdigest()
-    return f"{salt}${hashed}"
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        salt, stored_hash = hashed_password.split("$")
-        new_hash = hashlib.sha256((plain_password + salt).encode()).hexdigest()
-        return new_hash == stored_hash
-    except:
-        return False
+    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

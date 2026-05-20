@@ -12,6 +12,12 @@ class MongoDB:
     def connect(self):
         self.client = MongoClient(settings.mongo_uri)
         self.database = self.client[settings.database_name]
+        self._create_indexes()
+
+    def _create_indexes(self):
+        self.database["users"].create_index("username", unique=True)
+        self.database["users"].create_index("email", unique=True)
+        self.database["tasks"].create_index("user_id")
         
     def disconnect(self):
         if self.client:
@@ -21,4 +27,3 @@ class MongoDB:
         return self.database[name]
     
 db = MongoDB()
-        

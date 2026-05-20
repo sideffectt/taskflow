@@ -75,9 +75,9 @@ def update_user(username: str, update_data: dict) -> Optional[dict]:
     
     return result
 
-def get_all_users() -> list:
+def get_all_users(skip: int = 0, limit: int = 20) -> list:
     users = []
-    for user in get_collection().find():
+    for user in get_collection().find().skip(skip).limit(limit):
         user["id"] = str(user.pop("_id"))
         user.pop("password", None)
         users.append(user)

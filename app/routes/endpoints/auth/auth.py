@@ -25,7 +25,7 @@ async def register(user: UserCreate):
         username=user.username,
         email=user.email,
         password=user.password,
-        role=user.role.value
+        role="user"
     )
     return new_user
 

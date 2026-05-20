@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import List
 
 from app.models import UserResponse, UserRoleUpdate
@@ -9,8 +9,12 @@ router = APIRouter()
 
 
 @router.get("/users", response_model=List[UserResponse])
-async def list_all_users(current_user: dict = Depends(require_admin)):
-    return get_all_users()
+async def list_all_users(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=100),
+    current_user: dict = Depends(require_admin)
+):
+    return get_all_users(skip=skip, limit=limit)
 
 
 @router.put("/users/{username}/role", response_model=UserResponse)

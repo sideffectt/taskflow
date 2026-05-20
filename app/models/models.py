@@ -20,6 +20,7 @@ class TaskResponse(BaseModel):
     description: Optional[str]
     completed: bool
     priority: int
+    user_id: str
     created_at: datetime
     updated_at: datetime
     

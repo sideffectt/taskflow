@@ -9,3 +9,4 @@ httpx
 python-jose
 email-validator
 reportlab
+bcrypt
