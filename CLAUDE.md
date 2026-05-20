@@ -66,7 +66,14 @@ Copy `.env.example` → `.env` before running locally. Docker Compose injects `M
 
 ## Key Design Notes
 
-- Password hashing uses SHA256 with salt (`app/config/security.py`) — not bcrypt.
-- Tasks are not scoped per user (global collection). User-task ownership is a listed TODO.
-- No pagination on list endpoints (listed TODO).
+- Password hashing uses `bcrypt` directly (`app/config/security.py`).
+- Tasks are scoped to the authenticated user via `user_id` field — all CRUD queries filter by `user_id`.
+- `POST /auth/register` always creates `role="user"`. Admin creation is only possible via `PUT /admin/users/{username}/role` by an existing admin, or by calling `create_user()` service directly (e.g. in tests/seeds).
+- List endpoints support pagination: `GET /tasks?skip=0&limit=20`, `GET /admin/users?skip=0&limit=20` (max limit: 100).
+- MongoDB indexes: `users.username` (unique), `users.email` (unique), `tasks.user_id`. Created automatically on startup in `database.py:_create_indexes()`.
 - MongoDB IDs are serialized as strings; `_id` is remapped to `id` in response models.
+- `get_current_user` (returns username string from JWT) is used for all task endpoints — no extra DB lookup. `get_current_user_with_role` (fetches full user from DB) is used only where role data is needed (profile, admin).
+
+## Remaining TODOs
+
+- Refresh token support
